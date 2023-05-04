@@ -13,6 +13,8 @@ Sunshine!
 
 ## Download
 
+Check my X5000R branch for compiled images for the newest OpenWRT release.
+
 Built firmware images are available for many architectures and come with a
 package selection to be used as WiFi home router. To quickly find a factory
 image usable to migrate from a vendor stock firmware to OpenWrt, try the
