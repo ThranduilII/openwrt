@@ -13,7 +13,8 @@ Sunshine!
 
 ## Download
 
-Check my X5000R branch for compiled images for the newest OpenWRT release.
+Current v22.03.5 Totolink X5000R image with Zbit SPI-NOR support- [Openwrt-22.03.5-X5000R-Zbit-support.zip](https://github.com/ThranduilII/openwrt/files/11399642/Openwrt-22.03.5-X5000R-Zbit-support.zip)
+
 
 Built firmware images are available for many architectures and come with a
 package selection to be used as WiFi home router. To quickly find a factory
