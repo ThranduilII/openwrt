@@ -14,7 +14,9 @@ Sunshine!
 ## Download
 v22.03.3 - [OpenWRT-22.03.3-X5000R-Zbit-Support.zip](https://github.com/ThranduilII/openwrt/files/11558685/OpenWRT-22.03.3-X5000R-Zbit-Support.zip)
 
-v22.03.4 - [OpenWRT-22.03.4-x5000R-Zbits-Support.zip](https://github.com/ThranduilII/openwrt/files/11558681/OpenWRT-22.03.4-x5000R-Zbits-Support.zip)
+v22.03.4 - [OpenWRT-22.03.4-X5000R-Zbit-Support.zip](https://github.com/ThranduilII/openwrt/files/11558706/OpenWRT-22.03.4-X5000R-Zbit-Support.zip)
+
+
 
 Current v22.03.5 Totolink X5000R image with Zbit SPI-NOR support- [OpenWRT-22.03.5-X5000R-Zbit-support.zip](https://github.com/ThranduilII/openwrt/files/11558677/OpenWRT-22.03.5-X5000R-Zbit-support.zip)
 
