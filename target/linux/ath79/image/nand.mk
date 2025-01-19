@@ -32,7 +32,7 @@ endef
 
 define Build/zyxel-factory
 	let \
-		maxsize="$(subst k,* 1024,$(RAS_ROOTFS_SIZE))"; \
+		maxsize="$(call exp_units,$(RAS_ROOTFS_SIZE))"; \
 		let size="$$(stat -c%s $@)"; \
 		if [ $$size -lt $$maxsize ]; then \
 			$(STAGING_DIR_HOST)/bin/mkrasimage \
@@ -190,7 +190,8 @@ define Device/glinet_gl-e750
   SOC := qca9531
   DEVICE_VENDOR := GL.iNet
   DEVICE_MODEL := GL-E750
-  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca9887-ct kmod-usb2
+  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca9887-ct kmod-usb2 \
+	kmod-usb-net-qmi-wwan kmod-usb-serial-option uqmi
   SUPPORTED_DEVICES += gl-e750
   KERNEL_SIZE := 4096k
   IMAGE_SIZE := 131072k
@@ -203,12 +204,41 @@ define Device/glinet_gl-e750
 endef
 TARGET_DEVICES += glinet_gl-e750
 
+define Device/glinet_gl-s200-common
+  SOC := qca9531
+  DEVICE_VENDOR := GL.iNet
+  DEVICE_MODEL := GL-S200
+  DEVICE_PACKAGES := kmod-usb2 kmod-usb-serial-ch341
+  SUPPORTED_DEVICES += gl-s200 glinet,gl-s200
+endef
+
+define Device/glinet_gl-s200-nor
+  $(Device/glinet_gl-s200-common)
+  DEVICE_VARIANT := NOR
+  IMAGE_SIZE := 16000k
+endef
+TARGET_DEVICES += glinet_gl-s200-nor
+
+define Device/glinet_gl-s200-nor-nand
+  $(Device/glinet_gl-s200-common)
+  DEVICE_VARIANT := NOR/NAND
+  KERNEL_SIZE := 4096k
+  BLOCKSIZE := 128k
+  PAGESIZE := 2048
+  VID_HDR_OFFSET := 2048
+  IMAGES += factory.img
+  IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  IMAGE/factory.img := append-kernel | pad-to $$$$(KERNEL_SIZE) | append-ubi
+  SUPPORTED_DEVICES += gl-s200 glinet,gl-s200
+endef
+TARGET_DEVICES += glinet_gl-s200-nor-nand
+
 define Device/glinet_gl-xe300
   SOC := qca9531
   DEVICE_VENDOR := GL.iNet
   DEVICE_MODEL := GL-XE300
   DEVICE_PACKAGES := kmod-usb2 block-mount kmod-usb-serial-ch341 \
-	kmod-usb-net-qmi-wwan uqmi
+	kmod-usb-serial-option kmod-usb-net-qmi-wwan uqmi
   KERNEL_SIZE := 4096k
   IMAGE_SIZE := 131072k
   PAGESIZE := 2048
@@ -251,6 +281,12 @@ TARGET_DEVICES += glinet_gl-x1200-nor
 
 define Device/linksys_ea4500-v3
   SOC := qca9558
+  DEVICE_COMPAT_VERSION := 1.1
+  DEVICE_COMPAT_MESSAGE := Partition table has been changed. Please \
+	install kmod-mtd-rw and erase mtd8 (syscfg) before upgrade \
+	to keep configures, or forcibly flash factory image to mtd5 \
+	(firmware) partition with mtd tool to discard configures but \
+	claim additional space immediately.
   DEVICE_VENDOR := Linksys
   DEVICE_MODEL := EA4500
   DEVICE_VARIANT := v3
@@ -258,7 +294,7 @@ define Device/linksys_ea4500-v3
   BLOCKSIZE := 128k
   PAGESIZE := 2048
   KERNEL_SIZE := 4096k
-  IMAGE_SIZE := 81920k
+  IMAGE_SIZE := 128256k
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
   LINKSYS_HWNAME := EA4500V3
   IMAGES += factory.img
@@ -282,10 +318,11 @@ define Device/meraki_mr18
 # KERNEL_INITRAMFS := $$(KERNEL)
   KERNEL_INITRAMFS :=
   IMAGE/sysupgrade.bin := sysupgrade-tar | append-metadata
+  SUPPORTED_DEVICES += mr18
 endef
 TARGET_DEVICES += meraki_mr18
 
-# fake rootfs is mandatory, pad-offset 64 equals (1 * uimage_header)
+# fake rootfs is mandatory, pad-offset 129 equals (2 * uimage_header + '\0')
 define Device/netgear_ath79_nand
   DEVICE_VENDOR := NETGEAR
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ledtrig-usbport
@@ -293,8 +330,9 @@ define Device/netgear_ath79_nand
   BLOCKSIZE := 128k
   PAGESIZE := 2048
   IMAGE_SIZE := 25600k
-  KERNEL := kernel-bin | append-dtb | lzma | uImage lzma | \
-	pad-offset $$(BLOCKSIZE) 64 | append-uImage-fakehdr filesystem $$(UIMAGE_MAGIC)
+  KERNEL := kernel-bin | append-dtb | lzma | \
+	pad-offset $$(BLOCKSIZE) 129 | uImage lzma | pad-extra 1 | \
+	append-uImage-fakehdr filesystem $$(UIMAGE_MAGIC)
   IMAGES := sysupgrade.bin factory.img
   IMAGE/factory.img := append-kernel | pad-to $$$$(KERNEL_SIZE) | \
 	append-ubi | check-size | netgear-dni
@@ -372,6 +410,9 @@ TARGET_DEVICES += netgear_wndr4300tn
 
 define Device/netgear_wndr4300-v2
   SOC := qca9563
+  DEVICE_COMPAT_VERSION := 1.1
+  DEVICE_COMPAT_MESSAGE := Partition table has been changed to fix the \
+	first reboot issue. Please reflash factory image with nmrp or tftp.
   DEVICE_MODEL := WNDR4300
   DEVICE_VARIANT := v2
   UIMAGE_MAGIC := 0x27051956
@@ -383,6 +424,9 @@ TARGET_DEVICES += netgear_wndr4300-v2
 
 define Device/netgear_wndr4500-v3
   SOC := qca9563
+  DEVICE_COMPAT_VERSION := 1.1
+  DEVICE_COMPAT_MESSAGE := Partition table has been changed to fix the \
+	first reboot issue. Please reflash factory image with nmrp or tftp.
   DEVICE_MODEL := WNDR4500
   DEVICE_VARIANT := v3
   UIMAGE_MAGIC := 0x27051956
@@ -449,7 +493,7 @@ TARGET_DEVICES += zte_mf286r
 
 define Device/zyxel_nbg6716
   SOC := qca9558
-  DEVICE_VENDOR := ZyXEL
+  DEVICE_VENDOR := Zyxel
   DEVICE_MODEL := NBG6716
   DEVICE_PACKAGES := kmod-usb2 kmod-usb-ledtrig-usbport kmod-ath10k-ct \
 	ath10k-firmware-qca988x-ct

@@ -24,7 +24,7 @@ PKG_JOBS?=$(if $(PKG_BUILD_PARALLEL),$(MAKE_J),-j1)
 endif
 
 PKG_BUILD_FLAGS?=
-__unknown_flags=$(filter-out no-iremap no-mips16 gc-sections no-gc-sections lto no-lto,$(PKG_BUILD_FLAGS))
+__unknown_flags=$(filter-out no-iremap no-mips16 gc-sections no-gc-sections lto no-lto no-mold,$(PKG_BUILD_FLAGS))
 ifneq ($(__unknown_flags),)
   $(error unknown PKG_BUILD_FLAGS: $(__unknown_flags))
 endif
@@ -54,6 +54,11 @@ ifeq ($(call pkg_build_flag,lto,$(if $(CONFIG_USE_LTO),1,0)),1)
   TARGET_CFLAGS+= -flto=auto -fno-fat-lto-objects
   TARGET_CXXFLAGS+= -flto=auto -fno-fat-lto-objects
   TARGET_LDFLAGS+= -flto=auto -fuse-linker-plugin
+endif
+ifdef CONFIG_USE_MOLD
+  ifeq ($(call pkg_build_flag,mold,1),1)
+    TARGET_LINKER:=mold
+  endif
 endif
 
 include $(INCLUDE_DIR)/hardening.mk
@@ -131,7 +136,7 @@ PKG_INSTALL_STAMP:=$(PKG_INFO_DIR)/$(PKG_DIR_NAME).$(if $(BUILD_VARIANT),$(BUILD
 
 include $(INCLUDE_DIR)/package-defaults.mk
 include $(INCLUDE_DIR)/package-dumpinfo.mk
-include $(INCLUDE_DIR)/package-ipkg.mk
+include $(INCLUDE_DIR)/package-pack.mk
 include $(INCLUDE_DIR)/package-bin.mk
 include $(INCLUDE_DIR)/autotools.mk
 
@@ -194,6 +199,7 @@ define Build/Exports/Default
   $(1) : export CONFIG_SITE:=$$(CONFIG_SITE)
   $(1) : export PKG_CONFIG_PATH:=$$(PKG_CONFIG_PATH)
   $(1) : export PKG_CONFIG_LIBDIR:=$$(PKG_CONFIG_PATH)
+  $(1) : export GIT_CEILING_DIRECTORIES:=$$(BUILD_DIR)
 endef
 Build/Exports=$(Build/Exports/Default)
 
@@ -337,7 +343,7 @@ endef
 
 Build/Prepare=$(call Build/Prepare/Default,)
 Build/Configure=$(call Build/Configure/Default,)
-Build/Compile=$(call Build/Compile/Default,)
+Build/Compile=$(call Build/Compile/Default,$(if $(PKG_SUBDIRS),SUBDIRS='$$$$(wildcard $(PKG_SUBDIRS))'))
 Build/Install=$(if $(PKG_INSTALL),$(call Build/Install/Default,))
 Build/Dist=$(call Build/Dist/Default,)
 Build/DistCheck=$(call Build/DistCheck/Default,)

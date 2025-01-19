@@ -43,7 +43,7 @@ else
     PATCH_DIR ?= $(CURDIR)/patches$(if $(wildcard ./patches-$(KERNEL_PATCHVER)),-$(KERNEL_PATCHVER))
     FILES_DIR ?= $(foreach dir,$(wildcard $(CURDIR)/files $(CURDIR)/files-$(KERNEL_PATCHVER)),"$(dir)")
   endif
-  KERNEL_BUILD_DIR ?= $(BUILD_DIR)/linux-$(BOARD)$(if $(SUBTARGET),_$(SUBTARGET))
+  KERNEL_BUILD_DIR ?= $(BUILD_DIR)/linux-$(BOARD)_$(SUBTARGET)
   LINUX_DIR ?= $(KERNEL_BUILD_DIR)/linux-$(LINUX_VERSION)
   LINUX_UAPI_DIR=uapi/
   LINUX_VERMAGIC:=$(strip $(shell cat $(LINUX_DIR)/.vermagic 2>/dev/null))
@@ -86,10 +86,14 @@ else ifneq (,$(findstring $(ARCH) , arceb ))
   LINUX_KARCH := arc
 else ifneq (,$(findstring $(ARCH) , armeb ))
   LINUX_KARCH := arm
+else ifneq (,$(findstring $(ARCH) , loongarch64 ))
+  LINUX_KARCH := loongarch
 else ifneq (,$(findstring $(ARCH) , mipsel mips64 mips64el ))
   LINUX_KARCH := mips
 else ifneq (,$(findstring $(ARCH) , powerpc64 ))
   LINUX_KARCH := powerpc
+else ifneq (,$(findstring $(ARCH) , riscv64 ))
+  LINUX_KARCH := riscv
 else ifneq (,$(findstring $(ARCH) , sh2 sh3 sh4 ))
   LINUX_KARCH := sh
 else ifneq (,$(findstring $(ARCH) , i386 x86_64 ))
@@ -116,6 +120,10 @@ KERNEL_MAKE_FLAGS = \
 	$(if $(PKG_BUILD_ID),LDFLAGS_MODULE=--build-id=0x$(PKG_BUILD_ID)) \
 	cmd_syscalls= \
 	$(if $(__package_mk),KBUILD_EXTRA_SYMBOLS="$(wildcard $(PKG_SYMVERS_DIR)/*.symvers)")
+
+ifneq (,$(KERNEL_CC))
+  KERNEL_MAKE_FLAGS += CC="$(KERNEL_CC)"
+endif
 
 KERNEL_NOSTDINC_FLAGS = \
 	-nostdinc $(if $(DUMP),, -isystem $(shell $(TARGET_CC) -print-file-name=include))
@@ -198,19 +206,19 @@ define KernelPackage
   $(eval $(call KernelPackage/Defaults))
   $(eval $(call KernelPackage/$(1)))
   $(eval $(call KernelPackage/$(1)/$(BOARD)))
-  $(eval $(call KernelPackage/$(1)/$(BOARD)/$(if $(SUBTARGET),$(SUBTARGET),generic)))
+  $(eval $(call KernelPackage/$(1)/$(BOARD)/$(SUBTARGET)))
 
   define Package/kmod-$(1)
     TITLE:=$(TITLE)
     SECTION:=kernel
     CATEGORY:=Kernel modules
     DESCRIPTION:=$(DESCRIPTION)
-    EXTRA_DEPENDS:=kernel (=$(LINUX_VERSION)-$(LINUX_RELEASE)-$(LINUX_VERMAGIC))
-    VERSION:=$(LINUX_VERSION)$(if $(PKG_VERSION),+$(PKG_VERSION))-$(if $(PKG_RELEASE),$(PKG_RELEASE),$(LINUX_RELEASE))
+    EXTRA_DEPENDS:=kernel (=$(LINUX_VERSION)~$(LINUX_VERMAGIC)-r$(LINUX_RELEASE))
+    VERSION:=$(LINUX_VERSION)$(if $(PKG_VERSION),.$(PKG_VERSION))-r$(if $(PKG_RELEASE),$(PKG_RELEASE),$(LINUX_RELEASE))
     PKGFLAGS:=$(PKGFLAGS)
     $(call KernelPackage/$(1))
     $(call KernelPackage/$(1)/$(BOARD))
-    $(call KernelPackage/$(1)/$(BOARD)/$(if $(SUBTARGET),$(SUBTARGET),generic))
+    $(call KernelPackage/$(1)/$(BOARD)/$(SUBTARGET))
   endef
 
   ifdef KernelPackage/$(1)/conffiles
@@ -234,7 +242,7 @@ $(call KernelPackage/$(1)/config)
   $(call KernelPackage/depends)
   $(call KernelPackage/hooks)
 
-  ifneq ($(if $(filter-out %=y %=n %=m,$(KCONFIG)),$(filter m y,$(foreach c,$(filter-out %=y %=n %=m,$(KCONFIG)),$($(c)))),.),)
+  ifneq ($(if $(filter-out %=y %=n %=m,$(KCONFIG)),$(filter m y,$(foreach c,$(call version_filter,$(filter-out %=y %=n %=m,$(KCONFIG))),$($(c)))),.),)
     define Package/kmod-$(1)/install
 		  @for mod in $$(call version_filter,$$(FILES)); do \
 			if grep -q "$$$$$$$${mod##$(LINUX_DIR)/}" "$(LINUX_DIR)/modules.builtin"; then \

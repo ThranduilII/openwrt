@@ -7,6 +7,7 @@ include $(INCLUDE_DIR)/image.mk
 
 DEVICE_VARS += LOADER_TYPE LOADER_FLASH_OFFS LZMA_TEXT_START
 DEVICE_VARS += NETGEAR_BOARD_ID NETGEAR_HW_ID
+DEVICE_VARS += NETGEAR_ENC_MODEL NETGEAR_ENC_REGION NETGEAR_ENC_HW_ID_LIST NETGEAR_ENC_MODEL_LIST
 DEVICE_VARS += BUFFALO_TAG_PLATFORM BUFFALO_TAG_VERSION BUFFALO_TAG_MINOR
 DEVICE_VARS += SEAMA_SIGNATURE SEAMA_MTDBLOCK
 DEVICE_VARS += SERCOMM_HWNAME SERCOMM_HWID SERCOMM_HWVER SERCOMM_SWVER
@@ -30,7 +31,7 @@ KERNEL_DTB = kernel-bin | append-dtb | lzma
 
 define Build/jcg-header
 	$(STAGING_DIR_HOST)/bin/jcgimage -v $(1) \
-		$(if $(JCG_MAXSIZE), -m $$(($(subst k, * 1024,$(JCG_MAXSIZE)))),) \
+		$(if $(JCG_MAXSIZE), -m $$(($(call exp_units,$(JCG_MAXSIZE)))),) \
 		-u $@ -o $@.new
 	mv $@.new $@
 endef
@@ -139,9 +140,9 @@ define Build/sign-dlink-ru
 endef
 
 define Build/trx
-	$(STAGING_DIR_HOST)/bin/trx $(1) \
+	-$(STAGING_DIR_HOST)/bin/trx $(1) \
 		-o $@ \
-		-m $$(($(subst k, * 1024,$(IMAGE_SIZE)))) \
+		-m $$(($(call exp_units,$(IMAGE_SIZE)))) \
 		-f $(IMAGE_KERNEL) \
 		-a 4 -f $(IMAGE_ROOTFS)
 endef
@@ -166,10 +167,6 @@ define Build/wrg-header
 	mv $@.new $@
 endef
 
-define Build/zyimage
-	$(STAGING_DIR_HOST)/bin/zyimage $(1) $@
-endef
-
 define Device/Default
   PROFILES = Default
   BLOCKSIZE := 64k
@@ -179,6 +176,10 @@ define Device/Default
   SOC := $(DEFAULT_SOC)
   DEVICE_DTS_DIR := ../dts
   DEVICE_DTS = $$(SOC)_$(1)
+  NETGEAR_ENC_MODEL :=
+  NETGEAR_ENC_REGION :=
+  NETGEAR_ENC_HW_ID_LIST :=
+  NETGEAR_ENC_MODEL_LIST :=
   IMAGES := sysupgrade.bin
   COMPILE :=
   sysupgrade_bin := append-kernel | append-rootfs | pad-rootfs

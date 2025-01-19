@@ -11,10 +11,6 @@
 		led-failsafe = &led_power_green;
 		led-running = &led_power_green;
 		led-upgrade = &led_power_green;
-
-		led-dsl = &led_dsl_green;
-		led-internet = &led_internet_green;
-		led-usb = &led_usb_green;
 	};
 
 	keys {
@@ -78,25 +74,27 @@
 		label = "red:internet";
 	};
 
-	led_dsl_green: led@3 {
+	led@3 {
 		reg = <3>;
 		active-low;
 		label = "green:dsl";
 	};
 
-	led_usb_green: led@4 {
+	led@4 {
 		reg = <4>;
 		active-low;
-		label = "green:usb";
+		function = LED_FUNCTION_USB;
+		color = <LED_COLOR_ID_GREEN>;
 	};
 
 	led@7 {
 		reg = <7>;
 		active-low;
-		label = "green:wps";
+		function = LED_FUNCTION_WPS;
+		color = <LED_COLOR_ID_GREEN>;
 	};
 
-	led_internet_green: led@8 {
+	led@8 {
 		reg = <8>;
 		active-low;
 		label = "green:internet";
@@ -147,7 +145,8 @@
 	led_power_green: led@20 {
 		reg = <20>;
 		active-low;
-		label = "green:power";
+		function = LED_FUNCTION_POWER;
+		color = <LED_COLOR_ID_GREEN>;
 	};
 };
 
@@ -170,10 +169,20 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			cferom: partition@0 {
+			partition@0 {
 				label = "cferom";
 				reg = <0x0000000 0x0020000>;
 				read-only;
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					macaddr_cferom_6a0: macaddr@6a0 {
+						reg = <0x6a0 0x6>;
+					};
+				};
 			};
 
 			partition@20000 {
@@ -231,14 +240,4 @@
 
 &usbh {
 	status = "okay";
-};
-
-&cferom {
-	compatible = "nvmem-cells";
-	#address-cells = <1>;
-	#size-cells = <1>;
-
-	macaddr_cferom_6a0: macaddr@6a0 {
-		reg = <0x6a0 0x6>;
-	};
 };

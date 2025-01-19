@@ -8,12 +8,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=util-linux
-PKG_VERSION:=2.39
-PKG_RELEASE:=2
+PKG_VERSION:=2.40.2
+PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
-PKG_SOURCE_URL:=@KERNEL/linux/utils/$(PKG_NAME)/v2.39
-PKG_HASH:=32b30a336cda903182ed61feb3e9b908b762a5e66fe14e43efb88d37162075cb
+PKG_SOURCE_URL:=@KERNEL/linux/utils/$(PKG_NAME)/v2.40
+PKG_HASH:=d78b37a66f5922d70edf3bdfb01a6b33d34ed3c3cafd6628203b2a2b67c8e8b3
 PKG_CPE_ID:=cpe:/a:kernel:util-linux
 
 PKG_LICENSE:=GPL-2.0-only
@@ -174,6 +174,17 @@ define Package/cfdisk/description
  cfdisk is a curses-based program for partitioning any hard disk drive
 endef
 
+define Package/colrm
+$(call Package/util-linux/Default)
+  TITLE:=colrm removes selected columns from a file
+  DEPENDS:=
+endef
+
+define Package/colrm/description
+ colrm removes selected columns from a file. Input is taken from
+ standard input. Output is sent to standard output.
+endef
+
 define Package/dmesg
 $(call Package/util-linux/Default)
   TITLE:=print or control the kernel ring buffer
@@ -307,7 +318,7 @@ endef
 define Package/lsblk
 $(call Package/util-linux/Default)
   TITLE:=list block devices
-  DEPENDS:= +libblkid +libmount +libsmartcols
+  DEPENDS:= +libblkid +libmount +libsmartcols +libncurses
   SUBMENU=Disc
 endef
 
@@ -612,6 +623,7 @@ MESON_ARGS += \
 	-Dbuild-write=disabled \
 	-Dbuild-bash-completion=disabled \
 	-Dbuild-pylibmount=disabled \
+	-Dbuild-liblastlog2=disabled \
 	-Dreadline=disabled \
 	-Dmagic=disabled \
 	-Dncursesw=enabled
@@ -697,6 +709,11 @@ endef
 define Package/cfdisk/install
 	$(INSTALL_DIR) $(1)/usr/sbin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/sbin/cfdisk $(1)/usr/sbin/
+endef
+
+define Package/colrm/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/colrm $(1)/usr/bin/
 endef
 
 define Package/dmesg/install
@@ -898,6 +915,7 @@ $(eval $(call BuildPackage,blkid))
 $(eval $(call BuildPackage,blockdev))
 $(eval $(call BuildPackage,cal))
 $(eval $(call BuildPackage,cfdisk))
+$(eval $(call BuildPackage,colrm))
 $(eval $(call BuildPackage,dmesg))
 $(eval $(call BuildPackage,eject))
 $(eval $(call BuildPackage,fdisk))

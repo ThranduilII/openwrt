@@ -43,13 +43,8 @@ case "$FIRMWARE" in
 	ubnt,nanobridge-m|\
 	ubnt,nanostation-loco-m|\
 	ubnt,nanostation-m|\
-	ubnt,picostation-m|\
-	ubnt,powerbridge-m|\
-	ubnt,rocket-m)
+	ubnt,picostation-m)
 		caldata_extract "art" 0x1000 0x1000
-		;;
-	pqi,air-pen)
-		caldata_extract "art" 0x1000 0x7d2
 		;;
 	*)
 		caldata_die "board $board is not supported yet"

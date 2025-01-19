@@ -2,23 +2,6 @@
 #
 # Copyright (C) 2017 Cezary Jackiewicz <cezary@eko.one.pll>
 
-define KernelPackage/amazon-ena
-  SUBMENU:=$(NETWORK_DEVICES_MENU)
-  TITLE:=Elastic Network Adapter (for Amazon AWS T3)
-  DEPENDS:=@TARGET_x86_64
-  KCONFIG:=CONFIG_ENA_ETHERNET
-  FILES:=$(LINUX_DIR)/drivers/net/ethernet/amazon/ena/ena.ko
-  AUTOLOAD:=$(call AutoLoad,12,ena)
-endef
-
-define KernelPackage/amazon-ena/description
-  This driver supports Elastic Network Adapter (ENA)
-  used by Amazon AWS T3 instances.
-endef
-
-$(eval $(call KernelPackage,amazon-ena))
-
-
 define KernelPackage/amd-xgbe
   SUBMENU:=$(NETWORK_DEVICES_MENU)
   TITLE:=AMD Ethernet on SoC support
@@ -33,6 +16,18 @@ define KernelPackage/amd-xgbe/description
 endef
 
 $(eval $(call KernelPackage,amd-xgbe))
+
+
+define KernelPackage/dwmac-intel
+  SUBMENU:=$(NETWORK_DEVICES_MENU)
+  TITLE:=Intel GMAC support
+  DEPENDS:=@TARGET_x86_64 +kmod-stmmac-core
+  KCONFIG:=CONFIG_DWMAC_INTEL
+  FILES=$(LINUX_DIR)/drivers/net/ethernet/stmicro/stmmac/dwmac-intel.ko
+  AUTOLOAD=$(call AutoLoad,45,dwmac-intel)
+endef
+
+$(eval $(call KernelPackage,dwmac-intel))
 
 
 define KernelPackage/f71808e-wdt

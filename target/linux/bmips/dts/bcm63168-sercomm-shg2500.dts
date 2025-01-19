@@ -11,10 +11,6 @@
 		led-failsafe = &led_power_red;
 		led-running = &led_power_red;
 		led-upgrade = &led_power_red;
-
-		led-internet = &led_internet_green;
-		led-usb = &led_modem_green;
-		led-wireless = &led_wireless_green;
 	};
 
 	i2c {
@@ -50,9 +46,8 @@
 		pci-bus = <1>;
 		pci-dev = <0>;
 
-		nvmem-cells = <&macaddr_cferom_6a0>;
+		nvmem-cells = <&macaddr_cferom_6a0 1>;
 		nvmem-cell-names = "mac-address";
-		mac-address-increment = <1>;
 
 		brcm,sprom = "brcm/bcm4360-sprom.bin";
 	};
@@ -65,7 +60,7 @@
 &ethernet {
 	status = "okay";
 
-	nvmem-cells = <&macaddr_cferom_6a0>;
+	nvmem-cells = <&macaddr_cferom_6a0 0>;
 	nvmem-cell-names = "mac-address";
 };
 
@@ -82,7 +77,7 @@
 			label = "red:modem";
 		};
 
-		led_modem_green: led@2 {
+		led@2 {
 			reg = <2>;
 			label = "green:modem";
 		};
@@ -107,17 +102,18 @@
 			label = "green:phone";
 		};
 
-		led_wireless_green: led@7 {
+		led@7 {
 			reg = <7>;
 			label = "green:wifi";
 		};
 
 		led_power_red: led@8 {
 			reg = <8>;
-			label = "red:power";
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_RED>;
 		};
 
-		led_internet_green: led@9 {
+		led@9 {
 			reg = <9>;
 			label = "green:internet";
 		};
@@ -196,10 +192,22 @@
 			#address-cells = <1>;
 			#size-cells = <1>;
 
-			cferom: partition@0 {
+			partition@0 {
 				label = "cferom";
 				reg = <0x0000000 0x0020000>;
 				read-only;
+
+				nvmem-layout {
+					compatible = "fixed-layout";
+					#address-cells = <1>;
+					#size-cells = <1>;
+
+					macaddr_cferom_6a0: macaddr@6a0 {
+						compatible = "mac-base";
+						reg = <0x6a0 0x6>;
+						#nvmem-cell-cells = <1>;
+					};
+				};
 			};
 
 			partition@20000 {
@@ -312,14 +320,4 @@
 
 &usbh {
 	status = "okay";
-};
-
-&cferom {
-	compatible = "nvmem-cells";
-	#address-cells = <1>;
-	#size-cells = <1>;
-
-	macaddr_cferom_6a0: macaddr@6a0 {
-		reg = <0x6a0 0x6>;
-	};
 };

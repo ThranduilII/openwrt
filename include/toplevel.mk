@@ -50,6 +50,7 @@ space:= $(empty) $(empty)
 path:=$(subst :,$(space),$(PATH))
 path:=$(filter-out .%,$(path))
 path:=$(subst $(space),:,$(path))
+export ORIG_PATH:=$(if $(ORIG_PATH),$(ORIG_PATH),$(PATH))
 export PATH:=$(path)
 export STAGING_DIR_HOST:=$(if $(STAGING_DIR),$(abspath $(STAGING_DIR)/../host),$(TOPDIR)/staging_dir/host)
 
@@ -76,7 +77,8 @@ _ignore = $(foreach p,$(IGNORE_PACKAGES),--ignore $(p))
 
 prepare-tmpinfo: FORCE
 	@+$(MAKE) -r -s $(STAGING_DIR_HOST)/.prereq-build $(PREP_MK)
-	mkdir -p tmp/info
+	mkdir -p tmp/info feeds
+	[ -e $(TOPDIR)/feeds/base ] || ln -sf $(TOPDIR)/package $(TOPDIR)/feeds/base
 	$(_SINGLE)$(NO_TRACE_MAKE) -j1 -r -s -f include/scan.mk SCAN_TARGET="packageinfo" SCAN_DIR="package" SCAN_NAME="package" SCAN_DEPTH=5 SCAN_EXTRA=""
 	$(_SINGLE)$(NO_TRACE_MAKE) -j1 -r -s -f include/scan.mk SCAN_TARGET="targetinfo" SCAN_DIR="target/linux" SCAN_NAME="target" SCAN_DEPTH=3 SCAN_EXTRA="" SCAN_MAKEOPTS="TARGET_BUILD=1"
 	for type in package target; do \
@@ -211,7 +213,7 @@ prereq:: prepare-tmpinfo .config
 check: .config FORCE
 	@+$(NO_TRACE_MAKE) -r -s $@ QUIET= V=s
 
-val.%: FORCE
+val.% var.%: FORCE
 	@+$(NO_TRACE_MAKE) -r -s $@ QUIET= V=s
 
 WARN_PARALLEL_ERROR = $(if $(BUILD_LOG),,$(and $(filter -j,$(MAKEFLAGS)),$(findstring s,$(OPENWRT_VERBOSE))))
@@ -259,7 +261,7 @@ help:
 	cat README.md
 
 distclean:
-	rm -rf bin build_dir .ccache .config* dl feeds key-build* logs package/feeds staging_dir tmp
+	rm -rf bin build_dir .ccache .config* dl feeds key-build* logs package/feeds target/linux/feeds staging_dir tmp
 	@$(_SINGLE)$(SUBMAKE) -C scripts/config clean
 
 ifeq ($(findstring v,$(DEBUG)),)
